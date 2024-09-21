@@ -49,7 +49,7 @@ using namespace swss;
 
 #define ETHER_ADDR_STRLEN (3*ETH_ALEN)
 
-#define MULTIPATH_NUM 256 //Same value used for FRR in SONiC
+#define MAX_MULTIPATH_NUM 256 //Same value used for FRR in SONiC
 
 /* Returns name of the protocol passed number represents */
 static string getProtocolString(int proto)
@@ -959,7 +959,7 @@ void RouteSync::onNextHopMsg(struct nlmsghdr *h, int len)
     string ifname;
     struct nhmsg *nhm = NULL;
     struct rtattr *tb[NHA_MAX + 1] = {};
-    struct nexthop_grp grp[MULTIPATH_NUM];
+    struct nexthop_grp grp[MAX_MULTIPATH_NUM];
     struct in_addr ipv4 = {0};
     struct in6_addr ipv6 = {0};
     char gateway[INET6_ADDRSTRLEN] = {0};
@@ -995,8 +995,8 @@ void RouteSync::onNextHopMsg(struct nlmsghdr *h, int len)
             struct nexthop_grp *nha_grp = (struct nexthop_grp *)RTA_DATA(tb[NHA_GROUP]);
             grp_count = (int)(RTA_PAYLOAD(tb[NHA_GROUP]) / sizeof(*nha_grp));
 
-            if(grp_count > MULTIPATH_NUM)
-                grp_count = MULTIPATH_NUM;
+            if(grp_count > MAX_MULTIPATH_NUM)
+                grp_count = MAX_MULTIPATH_NUM;
 
             for (int i = 0; i < grp_count; i++) {
                     grp[i].id = nha_grp[i].id;
