@@ -963,14 +963,6 @@ void RouteSync::onNextHopMsg(struct nlmsghdr *h, int len)
     struct in_addr ipv4 = {0};
     struct in6_addr ipv6 = {0};
     char gateway[INET6_ADDRSTRLEN] = {0};
-    char ifname_unknown[IFNAMSIZ] = "unknown";
-
-    SWSS_LOG_INFO("type %d len %d", nlmsg_type, len);
-    if ((nlmsg_type != RTM_NEWNEXTHOP)
-        && (nlmsg_type != RTM_DELNEXTHOP))
-    {
-        return;
-    }
 
     nhm = (struct nhmsg *)NLMSG_DATA(h);
 
