@@ -14,7 +14,9 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+#ifdef HAVE_NEXTHOP_GROUP
 #include <linux/nexthop.h>
+#endif
 
 using namespace std;
 using namespace swss;
