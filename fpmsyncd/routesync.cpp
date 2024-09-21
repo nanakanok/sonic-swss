@@ -1754,7 +1754,7 @@ void RouteSync::updateNextHopGroup(uint32_t nh_id)
     auto git = m_nh_groups.find(nh_id);
     if(git == m_nh_groups.end())
     {
-        SWSS_LOG_INFO("Nexthop not found: %d", nh_id);
+        SWSS_LOG_ERROR("Nexthop not found: %d", nh_id);
         return;
     }
 
@@ -1779,7 +1779,7 @@ void RouteSync::deleteNextHopGroup(uint32_t nh_id)
     auto git = m_nh_groups.find(nh_id);
     if(git == m_nh_groups.end())
     {
-        SWSS_LOG_INFO("Nexthop not found: %d", nh_id);
+        SWSS_LOG_ERROR("Nexthop not found: %d", nh_id);
         return;
     }
 
@@ -1851,7 +1851,7 @@ void RouteSync::getNextHopGroupFields(const NextHopGroup& nhg, string& nexthops,
             auto itr = m_nh_groups.find(id);
             if(itr == m_nh_groups.end())
             {
-                SWSS_LOG_INFO("NextHop group is incomplete: %d", nhg.id);
+                SWSS_LOG_ERROR("NextHop group is incomplete: %d", nhg.id);
                 return;
             }
 
