@@ -14,7 +14,9 @@
 #include <string.h>
 #include <arpa/inet.h>
 
+#ifdef HAVE_NEXTHOP_GROUP
 #include <linux/nexthop.h>
+#endif
 
 using namespace std;
 using namespace swss;
@@ -961,6 +963,7 @@ void RouteSync::onNextHopMsg(struct nlmsghdr *h, int len)
     struct in_addr ipv4 = {0};
     struct in6_addr ipv6 = {0};
     char gateway[INET6_ADDRSTRLEN] = {0};
+    char ifname_unknown[IFNAMSIZ] = "unknown";
 
     nhm = (struct nhmsg *)NLMSG_DATA(h);
 
