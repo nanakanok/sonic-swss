@@ -242,6 +242,30 @@ uint64_t FpmLink::readData()
     return 0;
 }
 
+string getNexthopGroupValue(DBConnector *cfgDb)
+{
+    Table cfgDeviceMetaDataTable(cfgDb, CFG_DEVICE_METADATA_TABLE_NAME);
+    string nexthop_group;
+
+    try
+    {
+        if (cfgDeviceMetaDataTable.hget("localhost", "nexthop_group", nexthop_group))
+        {
+            return nexthop_group;
+        }
+        else
+        {
+            SWSS_LOG_ERROR("nexthop_group is not configured");
+            return;
+        }
+    }
+    catch(const system_error& e)
+    {
+        SWSS_LOG_ERROR("System error: %s", e.what());
+        return;
+    }
+}
+
 void FpmLink::processFpmMessage(fpm_msg_hdr_t* hdr)
 {
     size_t msg_len = fpm_msg_len(hdr);
@@ -277,10 +301,13 @@ void FpmLink::processFpmMessage(fpm_msg_hdr_t* hdr)
             processRawMsg(nl_hdr);
         }
 //#ifdef HAVE_NEXTHOP_GROUP
-	else if(nl_hdr->nlmsg_type == RTM_NEWNEXTHOP || nl_hdr->nlmsg_type == RTM_DELNEXTHOP)
+	    else if(nl_hdr->nlmsg_type == RTM_NEWNEXTHOP || nl_hdr->nlmsg_type == RTM_DELNEXTHOP)
         {
-            /* rtnl api dont support RTM_NEWNEXTHOP/RTM_DELNEXTHOP yet. Processing as raw message*/
-            processRawMsg(nl_hdr);
+            if (getNexthopGroupValue == "enabled")
+            {
+                /* rtnl api dont support RTM_NEWNEXTHOP/RTM_DELNEXTHOP yet. Processing as raw message*/
+                processRawMsg(nl_hdr);
+            }
         }
 //#endif
         else
