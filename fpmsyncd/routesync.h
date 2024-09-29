@@ -31,8 +31,6 @@ extern void netlink_parse_rtattr(struct rtattr **tb, int max, struct rtattr *rta
 
 namespace swss {
 
-string getNexthopGroupValue(DBConnector *cfgDb);
-
 //#ifdef HAVE_NEXTHOP_GROUP
 struct NextHopGroup {
     uint32_t id;
