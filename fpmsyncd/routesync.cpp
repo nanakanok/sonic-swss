@@ -13,10 +13,7 @@
 #include "converter.h"
 #include <string.h>
 #include <arpa/inet.h>
-
-//#ifdef HAVE_NEXTHOP_GROUP
 #include <linux/nexthop.h>
-//#endif
 
 using namespace std;
 using namespace swss;
@@ -83,9 +80,7 @@ static decltype(auto) makeNlAddr(const T& ip)
 
 RouteSync::RouteSync(RedisPipeline *pipeline) :
     m_routeTable(pipeline, APP_ROUTE_TABLE_NAME, true),
-//#ifdef HAVE_NEXTHOP_GROUP
     m_nexthop_groupTable(pipeline, APP_NEXTHOP_GROUP_TABLE_NAME, true),
-//#endif
     m_label_routeTable(pipeline, APP_LABEL_ROUTE_TABLE_NAME, true),
     m_vnet_routeTable(pipeline, APP_VNET_RT_TABLE_NAME, true),
     m_vnet_tunnelTable(pipeline, APP_VNET_RT_TUNNEL_TABLE_NAME, true),
@@ -599,20 +594,16 @@ void RouteSync::onMsgRaw(struct nlmsghdr *h)
 
     if ((h->nlmsg_type != RTM_NEWROUTE)
         && (h->nlmsg_type != RTM_DELROUTE)
-//#ifdef HAVE_NEXTHOP_GROUP
         && (h->nlmsg_type != RTM_NEWNEXTHOP)
         && (h->nlmsg_type != RTM_DELNEXTHOP)
-//#endif
     )
         return;
 
-//#ifdef HAVE_NEXTHOP_GROUP
     if(h->nlmsg_type == RTM_NEWNEXTHOP || h->nlmsg_type == RTM_DELNEXTHOP)
     {
         len = (int)(h->nlmsg_len - NLMSG_LENGTH(sizeof(struct nhmsg)));
     }
     else
-//#endif
     {
         len = (int)(h->nlmsg_len - NLMSG_LENGTH(sizeof(struct ndmsg)));
     }
@@ -625,13 +616,11 @@ void RouteSync::onMsgRaw(struct nlmsghdr *h)
         return;
     }
 
-//#ifdef HAVE_NEXTHOP_GROUP
     if(h->nlmsg_type == RTM_NEWNEXTHOP || h->nlmsg_type == RTM_DELNEXTHOP)
     {
         onNextHopMsg(h, len);
     }
     else
-//#endif
     {
         onEvpnRouteMsg(h, len);
     }
@@ -795,7 +784,6 @@ void RouteSync::onRouteMsg(int nlmsg_type, struct nl_object *obj, char *vrf)
     string intf_list;
     string mpls_list;
 
-//#ifdef HAVE_NEXTHOP_GROUP
     string nhg_id_key;
     uint32_t nhg_id = rtnl_route_get_nh_id(route_obj);
     if(nhg_id)
@@ -834,7 +822,6 @@ void RouteSync::onRouteMsg(int nlmsg_type, struct nl_object *obj, char *vrf)
 
     }
     else
-//#endif
     {
         struct nl_list_head *nhs = rtnl_route_get_nexthops(route_obj);
         if (!nhs)
@@ -914,14 +901,12 @@ void RouteSync::onRouteMsg(int nlmsg_type, struct nl_object *obj, char *vrf)
 
     if (!warmRestartInProgress)
     {
-//#ifdef HAVE_NEXTHOP_GROUP
         if(nhg_id)
         {
             m_routeTable.set(destipprefix, fvVector);
             SWSS_LOG_INFO("RouteTable set msg: %s %d ", destipprefix, nhg_id);
         }
         else
-//#endif
         {
             m_routeTable.set(destipprefix, fvVector);
             SWSS_LOG_INFO("RouteTable set msg: %s %s %s %s", destipprefix,
@@ -949,7 +934,6 @@ void RouteSync::onRouteMsg(int nlmsg_type, struct nl_object *obj, char *vrf)
  * Handle Nexthop msg
  * @arg nlmsghdr      Netlink message
  */
-//#ifdef HAVE_NEXTHOP_GROUP
 void RouteSync::onNextHopMsg(struct nlmsghdr *h, int len)
 {
     int nlmsg_type = h->nlmsg_type;
@@ -1074,7 +1058,6 @@ void RouteSync::onNextHopMsg(struct nlmsghdr *h, int len)
 
     return;
 }
-//#endif
 
 /*
  * Handle label route
@@ -1739,7 +1722,6 @@ void RouteSync::onWarmStartEnd(DBConnector& applStateDb)
  *
  * Return nexthop group key
  */
-//#ifdef HAVE_NEXTHOP_GROUP
 const string RouteSync::getNextHopGroupKeyAsString(uint32_t id) const
 {
     return string("ID") + to_string(id);
@@ -1871,4 +1853,3 @@ void RouteSync::getNextHopGroupFields(const NextHopGroup& nhg, string& nexthops,
         }
     }
 }
-//#endif
