@@ -836,43 +836,49 @@ void RouteSync::onRouteMsg(int nlmsg_type, struct nl_object *obj, char *vrf)
         string weights = getNextHopWt(route_obj);
 
         vector<string> alsv = tokenize(intf_list, NHG_DELIMITER);
-        for (auto alias : alsv)
+
+        if (alsv.size() == 1)
         {
-            /*
-             * An FRR behavior change from 7.2 to 7.5 makes FRR update default route to eth0 in interface
-             * up/down events. Skipping routes to eth0 or docker0 to avoid such behavior
-             */
-            if (alias == "eth0" || alias == "docker0")
+            if (alsv[0] == "eth0" || alsv[0] == "docker0")
             {
                 SWSS_LOG_DEBUG("Skip routes to eth0 or docker0: %s %s %s",
-                        destipprefix, gw_list.c_str(), intf_list.c_str());
-                // If intf_list has only this interface, that means all of the next hops of this route
-                // have been removed and the next hop on the eth0/docker0 has become the only next hop.
-                // In this case since we do not want the route with next hop on eth0/docker0, we return.
-                // But still we need to clear the route from the APPL_DB. Otherwise the APPL_DB and data
-                // path will be left with stale route entry
-                if(alsv.size() == 1)
+                            destipprefix, gw_list.c_str(), intf_list.c_str());
+
+                if (!warmRestartInProgress)
                 {
-                    if (!warmRestartInProgress)
-                    {
-                        SWSS_LOG_NOTICE("RouteTable del msg for route with only one nh on eth0/docker0: %s %s %s %s",
-                                destipprefix, gw_list.c_str(), intf_list.c_str(), mpls_list.c_str());
+                    SWSS_LOG_NOTICE("RouteTable del msg for route with only one nh on eth0/docker0: %s %s %s %s",
+                                    destipprefix, gw_list.c_str(), intf_list.c_str(), mpls_list.c_str());
 
-                        m_routeTable.del(destipprefix);
-                    }
-                    else
-                    {
-                        SWSS_LOG_NOTICE("Warm-Restart mode: Receiving delete msg for route with only nh on eth0/docker0: %s %s %s %s",
-                                destipprefix, gw_list.c_str(), intf_list.c_str(), mpls_list.c_str());
+                    m_routeTable.del(destipprefix);
+                }
+                else
+                {
+                    SWSS_LOG_NOTICE("Warm-Restart mode: Receiving delete msg for route with only nh on eth0/docker0: %s %s %s %s",
+                                    destipprefix, gw_list.c_str(), intf_list.c_str(), mpls_list.c_str());
 
-                        vector<FieldValueTuple> fvVector;
-                        const KeyOpFieldsValuesTuple kfv = std::make_tuple(destipprefix,
-                                                                           DEL_COMMAND,
-                                                                           fvVector);
-                        m_warmStartHelper.insertRefreshMap(kfv);
-                    }
+                    vector<FieldValueTuple> fvVector;
+                    const KeyOpFieldsValuesTuple kfv = std::make_tuple(destipprefix,
+                                                                    DEL_COMMAND,
+                                                                    fvVector);
+                    m_warmStartHelper.insertRefreshMap(kfv);
                 }
                 return;
+            }
+        }
+        else
+        {
+            for (auto alias : alsv)
+            {
+                /*
+                * A change in FRR behavior from version 7.2 to 7.5 causes the default route to be updated to eth0
+                * during interface up/down events. This skips routes to eth0 or docker0 to avoid such behavior.
+                */
+                if (alias == "eth0" || alias == "docker0")
+                {
+                    SWSS_LOG_DEBUG("Skip routes to eth0 or docker0: %s %s %s",
+                                destipprefix, gw_list.c_str(), intf_list.c_str());
+                    continue;
+                }
             }
         }
 
