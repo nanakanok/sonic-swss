@@ -1736,7 +1736,7 @@ void RouteSync::onWarmStartEnd(DBConnector& applStateDb)
  */
 const string RouteSync::getNextHopGroupKeyAsString(uint32_t id) const
 {
-    return string("ID") + to_string(id);
+    return to_string(id);
 }
 
 /*
